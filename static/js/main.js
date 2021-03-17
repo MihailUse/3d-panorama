@@ -15,48 +15,12 @@ function onProgress(event) {
     }
 }
 
-let panoramas = {
-    'panorama1': {
-        'img': './static/images/tunnel.jpg',
-        'links': {
-            'link1': {
-                'src': 'panorama2',
-                'pos': [2000, 0, -2000]
-            }
-        },
-        'infospots': {
-            'infospot1': {
-                'radius': 300,
-                'pos': [0, 0, -5000],
-                'text': 'infospot1 \nLorem ipsum dolor sit amet, consectetur adipisicing elit. Deleniti eligendi, libero odit\n' +
-                    '            provident quam quidem recusandae sunt vitae. Adipisci animi consectetur consequatur, consequuntur culpa debitis\n' +
-                    '            dicta doloremque est iste itaque quae, quidem quis sunt suscipit voluptatem. Consequuntur distinctio\n' +
-                    '            exercitationem\n' +
-                    '            fugiat id, laborum magni maiores, officiis, perspiciatis quas quasi quidem ullam?',
-            }
-        }
-    },
-    'panorama2': {
-        'img': './static/images/Melbourne_Docklands.jpg',
-        'links': {
-            'link1': {
-                'src': 'panorama1',
-                'pos': [2000, 0, -2000]
-            }
-        },
-        'infospots': {
-            'infospot1': {
-                'radius': 300,
-                'pos': [0, 0, -5000],
-                'text': 'infospot1 \nLorem ipsum dolor sit amet, consectetur adipisicing elit. Deleniti eligendi, libero odit\n' +
-                    '            provident quam quidem recusandae sunt vitae. Adipisci animi consectetur consequatur, consequuntur culpa debitis\n' +
-                    '            dicta doloremque est iste itaque quae, quidem quis sunt suscipit voluptatem. Consequuntur distinctio\n' +
-                    '            exercitationem\n' +
-                    '            fugiat id, laborum magni maiores, officiis, perspiciatis quas quasi quidem ullam?',
-            }
-        }
-    }
-}
+// get json
+// fetch("./static/points.json")
+//     .then(response => response.json())
+//     .then(json => (panoramas, json) => {
+//         panoramas = json;
+//     });
 
 
 let viewer = new PANOLENS.Viewer({
@@ -66,25 +30,21 @@ let viewer = new PANOLENS.Viewer({
     autoRotateActivationDuration: 5000
 });
 
+let all_links = {};
 for (let panoramaName in panoramas) {
     console.log('Panorama: ' + panoramaName);
 
-    // let links = panoramas[panoramaName]['links'];
+    let links = panoramas[panoramaName]['links'];
     let infoSpots = panoramas[panoramaName]['infospots'];
 
     let imgPanorama = new PANOLENS.ImagePanorama(panoramas[panoramaName]['img']);
     imgPanorama.addEventListener('progress', onProgress);
     imgPanorama.addEventListener('enter', onEnter);
 
-    panoramas[panoramaName]['ImgPanorama'] = imgPanorama; // ghghhhhhhhhh
-
-    // set links
-    // for (let link of links) {
-    //     let src = link['src'];
-    //     let [x, y, z] = link['pos'];
-    //
-    //     imgPanorama.link(eval(src), new THREE.Vector3(x, y, z));
-    // }
+    // define links
+    all_links[panoramaName] = {};
+    all_links[panoramaName]['ImgPanorama'] = imgPanorama;
+    all_links[panoramaName]['links'] = links;
 
     // set links to another panoramas
     for (let infoSpotName in infoSpots) {
@@ -107,20 +67,18 @@ for (let panoramaName in panoramas) {
 
         imgPanorama.add(infospot);
     }
-
     viewer.add(imgPanorama);
 }
 
+
 for (let panoramaName in panoramas) {
-    let links = panoramas[panoramaName]['links'];
-    let imgPanorama = panoramas[panoramaName]['ImgPanorama'];
+    let imgPanorama = all_links[panoramaName]['ImgPanorama'];
 
-    for (let link in links) {
-        let src = links[link]['src'];
-        let [x, y, z] = links[link]['pos'];
+    for (let link of all_links[panoramaName]['links']) {
+        let src = link['src'];
+        let [x, y, z] = link['pos'];
 
-        src = panoramas[src]['ImgPanorama'];
-
+        src = all_links[src]['ImgPanorama'];
         imgPanorama.link(src, new THREE.Vector3(x, y, z));
     }
 }
