@@ -15,71 +15,73 @@ function onProgress(event) {
     }
 }
 
-// get json
-// fetch("./static/points.json")
-//     .then(response => response.json())
-//     .then(json => (panoramas, json) => {
-//         panoramas = json;
-//     });
+function create_panorama(panoramas) {
+    let viewer = new PANOLENS.Viewer({
+        container: container,
+        autoRotate: true,
+        autoRotateSpeed: 0.1,
+        autoRotateActivationDuration: 5000
+    });
 
+    let all_links = {};
+    for (let panoramaName in panoramas) {
+        console.log('Panorama: ' + panoramaName);
 
-let viewer = new PANOLENS.Viewer({
-    container: container,
-    autoRotate: true,
-    autoRotateSpeed: 0.1,
-    autoRotateActivationDuration: 5000
-});
+        let img = panoramas[panoramaName]['img'];
+        let links = panoramas[panoramaName]['links'];
+        let infoSpots = panoramas[panoramaName]['infospots'];
 
-let all_links = {};
-for (let panoramaName in panoramas) {
-    console.log('Panorama: ' + panoramaName);
+        imgPanorama = new PANOLENS.ImagePanorama(img);
+        panoramas[panoramaName]['imgPanorama'] = imgPanorama;
+        imgPanorama.addEventListener('progress', onProgress);
+        imgPanorama.addEventListener('enter', onEnter);
 
-    let links = panoramas[panoramaName]['links'];
-    let infoSpots = panoramas[panoramaName]['infospots'];
+        // set links to another panoramas
+        for (let infoSpotName in infoSpots) {
+            console.log('\tinfospot - ' + infoSpotName);
 
-    let imgPanorama = new PANOLENS.ImagePanorama(panoramas[panoramaName]['img']);
-    imgPanorama.addEventListener('progress', onProgress);
-    imgPanorama.addEventListener('enter', onEnter);
+            let radius = infoSpots[infoSpotName]['radius'];
+            let text = infoSpots[infoSpotName]['text'];
+            let [x, y, z] = infoSpots[infoSpotName]['pos'];
 
-    // define links
-    all_links[panoramaName] = {};
-    all_links[panoramaName]['ImgPanorama'] = imgPanorama;
-    all_links[panoramaName]['links'] = links;
+            // append element in DOM
+            let infoSpotElement = document.createElement('div');
+            infoSpotElement.className = 'desc-container';
+            infoSpotElement.textContent = text;
+            container.appendChild(infoSpotElement);
 
-    // set links to another panoramas
-    for (let infoSpotName in infoSpots) {
-        console.log('\tinfospot - ' + infoSpotName);
+            // append info spot in panorama
+            let infospot = new PANOLENS.Infospot(radius, PANOLENS.DataImage.Info);
+            infospot.position.set(x, y, z); // x, y, z
+            infospot.addHoverElement(infoSpotElement, -100); // element, element position
 
-        let radius = infoSpots[infoSpotName]['radius'];
-        let text = infoSpots[infoSpotName]['text'];
-        let [x, y, z] = infoSpots[infoSpotName]['pos'];
-
-        // append element in DOM
-        let infoSpotElement = document.createElement('div');
-        infoSpotElement.className = 'desc-container';
-        infoSpotElement.textContent = text;
-        container.appendChild(infoSpotElement);
-
-        // append info spot in panorama
-        let infospot = new PANOLENS.Infospot(radius, PANOLENS.DataImage.Info);
-        infospot.position.set(x, y, z); // x, y, z
-        infospot.addHoverElement(infoSpotElement, -100); // element, element position
-
-        imgPanorama.add(infospot);
+            imgPanorama.add(infospot);
+        }
+        viewer.add(imgPanorama);
     }
-    viewer.add(imgPanorama);
-}
 
+    // set links to another panorams
+    for (let panoramaName in panoramas) {
+        let imgPanorama = panoramas[panoramaName]['imgPanorama'];
+        let links = panoramas[panoramaName]['links'];
 
-for (let panoramaName in panoramas) {
-    let imgPanorama = all_links[panoramaName]['ImgPanorama'];
+        for (let link of links) {
+            let src = panoramas[link['src']]['imgPanorama'];
+            let [x, y, z] = link['pos'];
 
-    for (let link of all_links[panoramaName]['links']) {
-        let src = link['src'];
-        let [x, y, z] = link['pos'];
-
-        src = all_links[src]['ImgPanorama'];
-        imgPanorama.link(src, new THREE.Vector3(x, y, z));
+            imgPanorama.link(src, new THREE.Vector3(x, y, z));
+        }
     }
 }
+
+// get json and create panoram
+fetch("./static/points.json")
+    .then(response => response.json())
+    .then(json => {
+        create_panorama(json)
+    });
+
+
+
+
 
