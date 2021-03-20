@@ -17,10 +17,13 @@ function onProgress(event) {
 
 function create_panorama(panoramas) {
     let viewer = new PANOLENS.Viewer({
+        output: 'console',
         container: container,
+        autoHideInfospot: false,
         autoRotate: true,
         autoRotateSpeed: 0.1,
-        autoRotateActivationDuration: 5000
+        autoRotateActivationDuration: 5000,
+        cameraFov: 100,
     });
 
     let all_links = {};
